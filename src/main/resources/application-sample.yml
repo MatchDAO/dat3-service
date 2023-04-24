@@ -1,0 +1,98 @@
+
+
+server:
+  port:
+  http2:
+    enabled:
+  undertow:
+    io-threads: 16
+    worker-threads: 256
+    buffer-size: 1024
+    direct-buffers: true
+  servlet:
+    context-path: /api/beta
+    session:
+      cookie:
+        http-only : false
+  freemarker:
+    check-template-location=false: false
+
+spring:
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+  datasource: # 数据源的相关配置
+    type: com.zaxxer.hikari.HikariDataSource          # 数据源类型：HikariCP
+    driver-class-name: com.mysql.cj.jdbc.Driver          # mysql驱动
+    url:
+    username:
+    password:
+    hikari:
+      connection-timeout: 30000        # 等待连接池分配连接的最大时长（毫秒），超过这个时长还没可用的连接则发生SQLException， 默认:30秒
+      minimum-idle: 5                  # 最小连接数
+      maximum-pool-size: 20            # 最大连接  数
+      auto-commit: true                # 事务自动提交
+      idle-timeout: 600000             # 连接超时的最大时长（毫秒），超时则被释放（retired），默认:10分钟
+      pool-name: DateSourceHikariCP     # 连接池名字
+      max-lifetime: 1800000             # 连接的生命时长（毫秒），超时而且没被使用则被释放（retired），默认:30分钟 1800000ms
+      connection-test-query: SELECT 1  # 连接测试语句
+  redis:
+    host: 127.0.0.1 # Redis服务器地址
+    password: # Redis服务器连接密码（默认为空）
+    database: 0 # Redis数据库索引（默认为0）
+    port: 6379 # Redis服务器连接端口
+    timeout: 500000
+    pool:
+      # 连接池最大连接数（使用负值表示没有限制）
+      maxactive: 64
+      # 连接池中的最大空闲连接
+      maxidle: 64
+      # 连接池最大阻塞等待时间（使用负值表示没有限制）
+      maxwait: -1
+      # 连接池中的最小空闲连接
+      minidle: 1
+  mail:
+    host:
+    username:
+    password:
+    protocol: smtps
+    port: 465
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+mybatis:
+  configuration:
+    map-underscore-to-camel-case : true
+#mybatis-plus配置
+mybatis-plus:
+  #配置Mapper映射文件
+  mapper-locations: classpath:/mappers/*.xml
+  configuration:
+    # 自动驼峰命名
+    map-underscore-to-camel-case: true
+    call-setters-on-nulls: true
+
+security:
+  uncheckusercode:
+    whites:
+      - ""
+  uncheck:
+    whites:
+      - "**"
+base:
+  transaction_url: ""
+  transaction_ip: ""
+
+oss:
+  path-style-access: false
+  endpoint:
+  access-key:
+  secret-key:
+  bucketName:
+logging:
+  config: classpath:log4j2_beta.xml

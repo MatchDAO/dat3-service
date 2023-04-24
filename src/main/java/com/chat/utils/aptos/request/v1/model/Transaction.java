@@ -1,0 +1,94 @@
+package com.chat.utils.aptos.request.v1.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.util.List;
+
+/**
+ * @author liqiang
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Transaction implements Serializable {
+
+    public static final String PENDING_TRANSACTION = "pending_transaction";
+
+    public static final String USER_TRANSACTION = "user_transaction";
+
+
+    @JsonProperty("version")
+    String version;
+
+    @JsonProperty("hash")
+    String hash;
+
+    @JsonProperty("state_change_hash")
+    String stateChangeHash;
+
+    @JsonProperty("event_root_hash")
+    String eventRootHash;
+
+    @JsonProperty("state_checkpoint_hash")
+    String stateCheckpointHash;
+
+    @JsonProperty("gas_used")
+    String gasUsed;
+    @JsonProperty("max_gas_amount")
+    String maxGasAmount;
+
+    @JsonProperty("success")
+    boolean success;
+
+    @JsonProperty("vm_status")
+    String vmStatus;
+
+    @JsonProperty("accumulator_root_hash")
+    String accumulatorRootHash;
+
+    @JsonProperty("sender")
+    String sender;
+
+    @JsonProperty("sequence_number")
+    String sequenceNumber;
+
+    @JsonProperty("payload")
+    TransactionPayload payload;
+
+    @JsonProperty("gas_unit_price")
+    String gasUnitPrice;
+
+    @JsonProperty("expiration_timestamp_secs")
+    String expirationTimestampSecs;
+
+    @JsonProperty("signature")
+    Signature signature;
+
+    @JsonProperty("events")
+    List<Event> events;
+
+    @JsonProperty("proposer")
+    String proposer;
+
+    @JsonProperty("timestamp")
+    String timestamp;
+    @JsonProperty("type")
+    String type;
+
+    public String getTimestampMillisecondV1() {
+        return String.valueOf(this.getTimestampMillisecondV2());
+    }
+
+    public long getTimestampMillisecondV2() {
+        return Long.parseLong(this.timestamp) / 1000L;
+    }
+
+}

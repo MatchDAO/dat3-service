@@ -1,0 +1,15 @@
+
+#  port: 8848
+spring:
+  profiles:
+    active: test
+#    -Dspring.profiles.active=beta -Dspring.config.name=application-beta
+#    -Dspring.profiles.active=prod -Dspring.config.name=application-prod
+
+
+
+
+
+
+
+
