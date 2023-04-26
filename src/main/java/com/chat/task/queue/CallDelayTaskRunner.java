@@ -119,6 +119,7 @@ public class CallDelayTaskRunner implements InitializingBean {
                         if (take.getFlag() > 0) {
                             Interactive end = interactiveService.getById(channel.getBegin() + take.getChannelName() + "0000");
                             //初始化通道,踢出所有人
+
                             try {
                                 agoraService.suspendChannel(channel.getChannel(), 0);
                                 //更新通道状态为关闭状态
@@ -129,6 +130,8 @@ public class CallDelayTaskRunner implements InitializingBean {
                             } catch (Exception e) {
                                 log.error(" " + e.fillInStackTrace());
                             }
+                            //当前是挂断操作 查询当前队列有无其他操作,有就删除
+                            myCallDelayQueue.removeIf(next -> take.getChannelName().equals(next.getChannelName()));
                             Interactive interactive = new Interactive();
                             interactive.setId(channel.getBegin() + take.getChannelName() + "0000");
                             interactive.setUserCode(from);
