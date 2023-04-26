@@ -1,0 +1,56 @@
+kind: pipeline # 定义对象类型，还有secret和signature两种类型
+type: docker # 定义流水线类型，还有kubernetes、exec、ssh等类型
+name: maven # 定义流水线名称
+
+steps: # 定义流水线执行步骤，这些步骤将顺序执行
+  - name: package # 流水线名称
+    image: maven:3-jdk-8 # 定义创建容器的Docker镜像
+    volumes: # 将容器内目录挂载到宿主机，仓库需要开启Trusted设置
+      - name: maven-cache
+        path: /root/.m2 # 将maven下载依赖的目录挂载出来，防止重复下载
+      - name: maven-build
+        path: /app/build # 将应用打包好的Jar和执行脚本挂载出来
+    commands: # 定义在Docker容器中执行的shell 命令
+      - cp /root/.m2/1data/beta_PrivateConfig.java  /drone/src/main/java/com/chat/config/own/PrivateConfig.java
+      - cp /root/.m2/1data/application-beta.yml  /drone/src/src/main/resources/application-beta.yml
+      - mvn clean package -DskipTests=true # 应用打包命令    /drone/src/target/demo1-0.0.1-SNAPSHOT.jar
+      - cd /app/build
+      - ls
+      - cd /drone/src/target
+      - ls
+      - cp /drone/src/target/chat-0.0.1-SNAPSHOT.jar  /app/build/new-chat-BETA.jar
+volumes: # 定义流水线挂载目录，用于共享数 据
+  - name: maven-build
+    host:
+      path: /data/runner # 挂载的目 录
+  - name: maven-cache
+    host:
+      path: /data/maven_cache
+
+#beta
+#kind: pipeline # 定义对象类型，还有secret和signature两种类型
+#type: docker # 定义流水线类型，还有kubernetes、exec、ssh等类型
+#name: maven # 定义流水线名称
+#
+#steps: # 定义流水线执行步骤，这些步骤将顺序执行
+#  - name: package # 流水线名称
+#    image: maven:3-jdk-8 # 定义创建容器的Docker镜像
+#    volumes: # 将容器内目录挂载到宿主机，仓库需要开启Trusted设置
+#      - name: maven-cache
+#        path: /root/.m2 # 将maven下载依赖的目录挂载出来，防止重复下载
+#      - name: maven-build
+#        path: /app/build # 将应用打包好的Jar和执行脚本挂载出来
+#    commands: # 定义在Docker容器中执行的shell命令
+#      - mvn clean package -DskipTests=true # 应用打包命令   /drone/src/target/demo1-0.0.1-SNAPSHOT.jar
+#      - cd /app/build
+#      - ls
+#      - cd /drone/src/target
+#      - ls
+#      - cp /drone/src/target/chat-0.0.1-SNAPSHOT.jar  /app/build/chat-BETA.jar
+#volumes: # 定义流水线挂载目录， 用于共享数据
+#  - name: maven-build
+#    host:
+#      path: /data/ # 挂载的目录
+#  - name: maven-cache
+#    host:
+#      path: /data/maven_cache
