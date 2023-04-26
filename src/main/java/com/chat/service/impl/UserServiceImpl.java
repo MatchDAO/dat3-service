@@ -816,6 +816,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         UserDto userDto1 = User2DtoMapper.INSTANCE.user2Dto(user);
         JSONObject entries = JSONUtil.parseObj(userDto1);
+        LinkedList<Map<String, Object>> filesUrl = sysFileService1.getFilesUrl(user.getUserCode());
+        entries.set("files",filesUrl);
         Creator creator = creatorService.getById(user.getUserCode());
         entries.set("show", false);
         entries.set("profession", "[]");
