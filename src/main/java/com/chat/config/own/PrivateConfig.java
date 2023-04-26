@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PrivateConfig {
+    public static final String APTOS_URL="https://fullnode.testnet.aptoslabs.com";
     public static final String DAT3 = "SOME_PUBLIC_KEY";
     public static final String DAT3_NFT = "SOME_PUBLIC_KEY";
     public static final String TR_KEY = "SOME_PUBLIC_KEY";
