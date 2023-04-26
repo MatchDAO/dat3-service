@@ -4,31 +4,22 @@ import cn.hutool.json.JSONArray;
 import com.chat.cache.RtcSessionCache;
 import com.chat.cache.UserCache;
 import com.chat.common.InteractiveStautsEnum;
-import com.chat.common.R;
 import com.chat.common.TokenEnum;
-import com.chat.config.ChatConfig;
 import com.chat.entity.Interactive;
 import com.chat.entity.User;
 import com.chat.entity.dto.ChannelDto;
-import com.chat.entity.dto.PriceGradeUserDto;
-import com.chat.entity.dto.WalletUserResult;
 import com.chat.service.AgoraService;
 import com.chat.service.AptosService;
 import com.chat.service.TransactionUtils;
 import com.chat.service.impl.InteractiveServiceImpl;
 import com.chat.service.impl.PriceGradeUserServiceImpl;
 import com.chat.service.impl.UserServiceImpl;
-import com.chat.utils.Coder;
-import com.chat.utils.DESCoder;
-import com.chat.utils.MessageUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.math.BigInteger;
-import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -43,12 +34,6 @@ public class CallDelayTaskRunner implements InitializingBean {
     private DelayQueue<CallDelayTask> myCallDelayQueue;
     @Resource
     private RtcSessionCache rtcSessionCache;
-    @Resource
-    private UserServiceImpl userService;
-    @Resource
-    private PriceGradeUserServiceImpl priceGradeUserService;
-    @Resource
-    private TransactionUtils transactionUtils;
     @Resource
     private InteractiveServiceImpl interactiveService;
     @Resource
@@ -75,7 +60,6 @@ public class CallDelayTaskRunner implements InitializingBean {
                         String to = take.getTo();
                         User fromUser = userCache.getUser(from);
                         User toUser = userCache.getUser(to);
-                        PriceGradeUserDto grade = priceGradeUserService.grade(to);
                         if (fromUser == null || toUser == null) {
                             log.error("AdvanceDelayTaskRunner :no user info");
                             continue;
@@ -86,8 +70,8 @@ public class CallDelayTaskRunner implements InitializingBean {
 
                         int size = userCall.size();
                         //每一次扣费
-                        if(take.getFlag()==100){
-                            if (userCall==null||size==0||(System.currentTimeMillis() / 1000 - (userCall.getJSONObject(size - 1).getLong("time")) > 30))//限定时间内未扣费
+                        if (take.getFlag() == 100) {
+                            if (userCall == null || size == 0 || (System.currentTimeMillis() / 1000 - (userCall.getJSONObject(size - 1).getLong("time")) > 30))//限定时间内未扣费
                             {
                                 myCallDelayQueue.add(new CallDelayTask(from, to, channel.getChannel(), 500, 3, take.getBegin()));
 
@@ -95,37 +79,41 @@ public class CallDelayTaskRunner implements InitializingBean {
                             continue;
                         }
                         //第一次是否扣费
-                        if(take.getFlag()==99){
-                            if (userCall==null||size==0||(System.currentTimeMillis() / 1000 - (userCall.getJSONObject(size - 1).getLong("time")) > 30))//限定时间内未扣费
+                        if (take.getFlag() == 99) {
+                            if (userCall == null || size == 0 || (System.currentTimeMillis() / 1000 - (userCall.getJSONObject(size - 1).getLong("time")) > 30))//限定时间内未扣费
                             {
                                 myCallDelayQueue.add(new CallDelayTask(from, to, channel.getChannel(), 500, 3, take.getBegin()));
 
                             }
                             continue;
                         }
-                        //余额 第59秒计算
-                        if(take.getFlag()==59){
-                            JSONArray userAssets = aptosService.getUserAssets(fromUser.getAddress());
-                            if(userAssets!=null&&userAssets.getLong(5)>=new BigInteger(grade.getEPrice()).longValue() ){
-                                long d = currentTimeMillis  - take.getBegin()/1000;
-                                long mo = d  % 60;
-                                Long current = 60L ;
-                                //时间节点每分钟过了几秒 时间归正为每分钟第54
-                                if (mo<15) {
-                                    current=60-(60-mo)-1;
-                                }
-                                if (mo<59&&mo>56){
-                                    current=60L;
-                                }
+                        //余额判断 第50秒计算 余额不够9.5秒后挂断
+                        if (take.getFlag() == 59) {
+                            JSONArray feeWith = aptosService.feeWith(toUser.getAddress(), fromUser.getAddress());
 
-                                myCallDelayQueue.add(new CallDelayTask(from, to, channel.getChannel(), current, 59, take.getBegin()));
+                            if (feeWith != null && feeWith.getLong(3) >= feeWith.getLong(2)) {
+                                long d = currentTimeMillis - take.getBegin() / 1000;
+                                long mo = d % 60;
+                                Long current = 60L;
+                                //时间节点每分钟过了几秒 时间归正为每分钟第54
+                                if (mo < 15) {
+                                    //时间归正为每分钟第51秒判断
+                                    current = 60 - (60 - mo) - 9;
+                                }
+                                if (mo < 59 && mo > 49) {
+                                    //触发时间正常 下次触发时间与本次触发时间相同
+                                    current = 60L;
+                                }
+                                myCallDelayQueue.add(new CallDelayTask(from, to, channel.getChannel(), current * 1000, 59, take.getBegin()));
+                                continue;
                             }
-                            myCallDelayQueue.add(new CallDelayTask(from, to, channel.getChannel(), 500, 5, take.getBegin()));
+                            log.info(feeWith.toString());
+                            myCallDelayQueue.add(new CallDelayTask(from, to, channel.getChannel(), 9500, 5, take.getBegin()));
                             continue;
                         }
 
 
-                        log.info(System.currentTimeMillis()/1000+"   userCall "+userCall);
+                        log.info(System.currentTimeMillis() / 1000 + "   userCall " + userCall);
 
                         log.info("channel69: {}", channel);
                         if (take.getFlag() > 0) {
@@ -171,7 +159,12 @@ public class CallDelayTaskRunner implements InitializingBean {
                             while (iterator.hasNext()) {
                                 CallDelayTask next = iterator.next();
                                 //相同的ChannelName 并且Flag不为0 有中断操作,当前扣费操作取消
-                                if (take.getChannelName().equals(next.getChannelName()) && next.getFlag() != null && (next.getFlag() > 0 &&next.getFlag()!=99)) {
+                                if (take.getChannelName().equals(next.getChannelName()) && next.getFlag() != null
+                                        && (next.getFlag() > 0
+                                        && next.getFlag() != 99
+                                        && next.getFlag() != 59
+                                        && next.getFlag() != 100
+                                )) {
                                     hasEnd = true;
                                     break;
                                 }
@@ -181,15 +174,15 @@ public class CallDelayTaskRunner implements InitializingBean {
                                 continue;
                             }
 
-                            if (userCall==null||size==0||(System.currentTimeMillis() / 1000 - (userCall.getJSONObject(size - 1).getLong("time")) > 15))//限定时间内未扣费
+                            if (userCall == null || size == 0 || (System.currentTimeMillis() / 1000 - (userCall.getJSONObject(size - 1).getLong("time")) > 15))//限定时间内未扣费
                             {
-                                log.info("userCall end  "+System.currentTimeMillis() / 1000+"  "+(userCall.getJSONObject(size - 1).getLong("time")) );
+                                log.info("userCall end  " + System.currentTimeMillis() / 1000 + "  " + (userCall.getJSONObject(size - 1).getLong("time")));
                                 myCallDelayQueue.add(new CallDelayTask(from, to, channel.getChannel(), 500, 3, take.getBegin()));
                                 continue;
                             }
                             //预扣费
-                            long d = currentTimeMillis  - take.getBegin()/1000;
-                            long mo = d  % 60;
+                            long d = currentTimeMillis - take.getBegin() / 1000;
+                            long mo = d % 60;
                             //扣费成功
                             rtcSessionCache.channelFrozen(from, to, "");
                             Long current = (60 - mo) + 10;
@@ -209,10 +202,9 @@ public class CallDelayTaskRunner implements InitializingBean {
                 // 在捕获了InterruptedException异常之后，如果你什么也不想做，那么就将标志重新置为true，以便栈中更高层的代码能知道中断，并且对中断作出响应。
                 Thread.currentThread().interrupt();
             }
-        }). start();
+        }).start();
 
     }
-
 
 
     @SneakyThrows

@@ -3,6 +3,7 @@ package com.chat.config;
 public class ChatConfig {
 
 
+
     // userId Length
     public static int USERID_LENGTH = 8;
 
@@ -24,7 +25,7 @@ public class ChatConfig {
 
     public static final String HOME = "https://dat3.app";
     public static final String TWITTER = "https://twitter.com/chatdat3";
-    public static final String DISCORD = "discord.gg/yD447YwBve";
+    public static final String DISCORD = "https://discord.gg/rqmN4bzP7S";
     public static final String EMAIL = "matchdao.web3@gmail.com";
     public static final String GITHUB = "https://github.com/MatchDAO";
 }

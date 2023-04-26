@@ -12,23 +12,24 @@ import javax.annotation.Resource;
 import java.util.Vector;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+/**
+ * Abandoned
+ * **/
 
 @Component
 @Slf4j
 public class MsgHoderTemp {
-    @Resource
-    private AptosService aptosService;
     Cache<String, Vector<Long>> cache = Caffeine.newBuilder()
             .expireAfterWrite(5, TimeUnit.SECONDS)
             .removalListener((String key, Vector<Long> value, RemovalCause cause) -> {
                 log.info("MsgHoderTemp:{},{},{}", key, value, cause);
                 if (cause.equals(RemovalCause.EXPIRED )&& value.size()>0) {
                     String[] split = key.split("@");
-                    aptosService.dat3_routel_send_msg(split[0], split[1], value.size(),split[2]);
+                   // aptosService.dat3_routel_send_msg(split[0], split[1], value.size(),split[2]);
                 }
             })
             .scheduler(Scheduler.forScheduledExecutorService(Executors.newScheduledThreadPool(1)))
-            .maximumSize(10000)
+            .maximumSize(10)
             .build();
 
 

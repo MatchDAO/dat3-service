@@ -36,7 +36,7 @@ public class MintCoin {
 //         res.set("epoch", epoch);
 //         res.set("currentEpochStartTime", currentEpochStartTime);
 //         res.set("nextEpochStartTime", nextEpochStartTime);
-        JSONArray mint = aptosService.getMint();
+        JSONArray mint = aptosService.getCoinMint();
         JSONObject epochInfo = aptosService.getEpochInfo();
         log.info("MintCoin {}------{}", mint, epochInfo);
         if (mint != null) {

@@ -29,47 +29,39 @@ public class MintTaskRunner implements InitializingBean {
                 log.info("MsgDelayTaskRunner {}", myMintTaskQueue.size());
                 while (true) {
                     MintTask take = myMintTaskQueue.take();
-                    log.info(""+take);
+                    log.info("" + take);
                     try {
                         int done = 0;
                         Response<Transaction> t0 = null;
                         while (done < 10) {
-                            JSONArray begin = aptosService.getMint();
-                            log.info("MintTaskRunner-{}  begin  {}",done, begin);
-                            t0 = aptosService.dat3_manager_mint_to();
-
-                            log.info("" + t0);
-                            log.info("" + t0.getData());
-                            if (!t0.isValid()) {
-                                try {
-                                    TimeUnit.SECONDS.sleep(3);
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
-
-                                JSONArray now = aptosService.getMint();
-                                JSONObject epochInfo = aptosService.getEpochInfo();
-                                log.info("MintTaskRunner-{}  now  {}-----{}",done, now,epochInfo);
-                                if (begin != null && now != null
-                                        && now.getLong(2) != begin.getLong(2)) {
-                                    Long last_epoch = now.getLong(2);
-                                    Long epoch = epochInfo.getLong("epoch");
-                                    Long epochInterval = epochInfo.getLong("epochInterval");
-                                    Long nextEpochStartTime = epochInfo.getLong("nextEpochStartTime");
-                                    long curr = nextEpochStartTime + 1 + (epochInterval * 11);
-                                    if (last_epoch == epoch) {
-                                        log.info("MintTaskRunner-{}  begin  {}",done, curr);
-                                        myMintTaskQueue.add(new MintTask("", "", "", curr * 1000, 0, last_epoch));
-                                        done = 10;
-                                    }
-                                }
-                            }
-                            done++;
+                            JSONArray begin = aptosService.getCoinMint();
+                            log.info("MintTaskRunner-{}  begin  {}", done, begin);
+                            aptosService.dat3ManagerMintTo();
                             try {
                                 TimeUnit.SECONDS.sleep(3);
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
                             }
+                            //校验是否成功
+                            JSONArray now = aptosService.getCoinMint();
+                            JSONObject epochInfo = aptosService.getEpochInfo();
+                            log.info("MintTaskRunner-{}  now  {}-----{}", done, now, epochInfo);
+                            if (begin != null && now != null
+                                    && now.getLong(2) != begin.getLong(2)) {
+                                Long last_epoch = now.getLong(2);
+                                Long epoch = epochInfo.getLong("epoch");
+                                Long epochInterval = epochInfo.getLong("epochInterval");
+                                Long nextEpochStartTime = epochInfo.getLong("nextEpochStartTime");
+                                long curr = nextEpochStartTime + 1 + (epochInterval * 11);
+                                if (last_epoch == epoch) {
+                                    log.info("MintTaskRunner-{}  begin  {}", done, curr);
+                                    myMintTaskQueue.add(new MintTask("", "", "", curr * 1000, 0, last_epoch));
+                                    done = 10;
+                                }
+                            }
+
+                            done++;
+
                         }
                     } catch (Exception e) {
                         log.error("" + e.fillInStackTrace());

@@ -28,11 +28,15 @@ public class AptosService {
 
     public BlockingQueue<AptosRequestTask> task = new LinkedBlockingQueue<AptosRequestTask>();
     @Resource
-    private AptosClient aptosClient;
+    public AptosClient aptosClient;
 
 
     public void toQueue(String sin, TransactionPayload payload, boolean simulate) {
         task.add(new AptosRequestTask(sin, payload, simulate));
+    }
+
+    public AptosClient client() {
+        return this.aptosClient;
     }
 
     public boolean checkUser(String address) {
@@ -43,7 +47,7 @@ public class AptosService {
     public JSONArray getUserAssets(String address) {
         try {
             TransactionViewPayload viewPayload = TransactionViewPayload.builder()
-                    .function(DAT3 + "::routel::assets")
+                    .function(DAT3 + "::payment::assets")
                     .arguments(Collections.singletonList(address))
                     .typeArguments(Collections.emptyList())
                     .build();
@@ -59,51 +63,73 @@ public class AptosService {
         return null;
     }
 
-    public Response<Transaction> dat3_manager_sys_user_init(String fid, String uid, String address) {
+    public JSONArray feeWith(String address, String consumerAddr) {
+        try {
+            ArrayList arguments = new ArrayList();
+            arguments.add(address);
+            arguments.add(consumerAddr);
+            TransactionViewPayload viewPayload = TransactionViewPayload.builder()
+                    .function(DAT3 + "::payment::fee_with")
+                    .arguments(arguments)
+                    .typeArguments(Collections.emptyList())
+                    .build();
+            Response<JSON> view = aptosClient.view(null, viewPayload);
+            if (JSONArray.class.equals(view.getData().getClass())) {
+                return JSONUtil.parseArray(view.getData());
+            }
+        } catch (Exception e) {
+            log.error("getUserAssets");
+            return null;
+        }
+        log.error("getUserAssets");
+        return null;
+    }
+
+    public void dat3SysUserInit(String fid, String uid, String address) {
         try {
             ArrayList arguments = new ArrayList<>();
+
             arguments.add(fid);
             arguments.add(uid);
             arguments.add(address);
             TransactionPayload transactionPayload = TransactionPayload.builder()
                     .type(TransactionPayload.ENTRY_FUNCTION_PAYLOAD)
-                    .function(DAT3 + "::routel::sys_user_init")
+                    .function(DAT3 + "::reward::sys_user_init")
                     .arguments(arguments)
                     .typeArguments(Collections.emptyList())
                     .build();
+            toQueue(DAT3,transactionPayload,false);
 
-            return aptosClient.requestSubmitTransaction(DAT3, transactionPayload);
         } catch (Exception e) {
             e.printStackTrace();
             log.error("getUserAssets");
-            return null;
+
         }
     }
-
-    public void dat3_routel_send_msg(String from, String to, Integer count, String sender) {
+    public  void addInvitee( String fid,String address) {
         try {
-            ArrayList arguments = new ArrayList<>();
-            arguments.add(from);
-            arguments.add(to);
-            arguments.add("" + count);
-            arguments.add("0");
-            TransactionPayload transactionPayload = TransactionPayload.builder()
-                    .type(TransactionPayload.ENTRY_FUNCTION_PAYLOAD)
-                    .function(DAT3 + "::routel::send_msg")
-                    .arguments(arguments)
-                    .typeArguments(Collections.emptyList())
-                    .build();
+        ArrayList arguments = new ArrayList<>();
 
-            toQueue(DAT3, transactionPayload, "0".equals(sender));
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("getUserAssets");
-        }
+        arguments.add(""+fid);
+        arguments.add(address);
+//        arguments.add(collection_name);
+        TransactionPayload transactionPayload = TransactionPayload.builder()
+                .type(TransactionPayload.ENTRY_FUNCTION_PAYLOAD)
+                .function(DAT3 + "::reward::add_invitee")
+                .arguments(arguments)
+                .typeArguments(Collections.emptyList())
+                .build();
+            toQueue(DAT3,transactionPayload,false);
+    } catch (Exception e) {
+        e.printStackTrace();
+        log.error("getUserAssets");
+
+    }
     }
 
     public JSONArray getUserCall(String address) {
         TransactionViewPayload viewPayload = TransactionViewPayload.builder()
-                .function(DAT3 + "::routel::remaining_time")
+                .function(DAT3 + "::payment::remaining_time")
                 .arguments(Collections.singletonList(address))
                 .typeArguments(Collections.emptyList())
                 .build();
@@ -117,7 +143,7 @@ public class AptosService {
         return null;
     }
 
-    public Response<Transaction> dat3_manager_mint_to() {
+    public void dat3ManagerMintTo() {
         try {
             TransactionPayload transactionPayload = TransactionPayload.builder()
                     .type(TransactionPayload.ENTRY_FUNCTION_PAYLOAD)
@@ -125,56 +151,17 @@ public class AptosService {
                     .arguments(Collections.emptyList())
                     .typeArguments(Collections.emptyList())
                     .build();
-
-            return aptosClient.requestSubmitTransaction(DAT3, transactionPayload);
+            toQueue(DAT3,transactionPayload,false);
+           // return aptosClient.requestSubmitTransaction(DAT3, transactionPayload);
         } catch (Exception e) {
             e.printStackTrace();
             log.error("getUserAssets");
-            return null;
+
         }
     }
 
 
-    public JSONArray view_call_1(String address, String to) {
-
-        ArrayList arguments = new ArrayList<>();
-        arguments.add(address);
-        arguments.add(to);
-        TransactionViewPayload viewPayload = TransactionViewPayload.builder()
-                .function(DAT3 + "::routel::view_call_1")
-                .arguments(arguments)
-                .typeArguments(Collections.emptyList())
-                .build();
-        Response<JSON> view = aptosClient.view(null, viewPayload);
-        log.error("view_call_1" + view);
-        if (JSONArray.class.equals(view.getData().getClass())) {
-            return JSONUtil.parseArray(view.getData()).getJSONArray(0);
-        }
-        return null;
-    }
-
-    public Response<Transaction> sys_call_1(String address, String to, String gas) throws InterruptedException {
-
-        ArrayList arguments = new ArrayList<>();
-        arguments.add(address);
-        arguments.add(to);
-        arguments.add(gas);
-        TransactionPayload viewPayload = TransactionPayload.builder()
-                .type(TransactionPayload.ENTRY_FUNCTION_PAYLOAD)
-                .function(DAT3 + "::routel::sys_call_1")
-                .arguments(arguments)
-                .typeArguments(Collections.emptyList())
-                .build();
-        try {
-            return aptosClient.requestSubmitTransaction(DAT3, viewPayload);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-
-    }
-
-    public JSONArray getMint() {
+    public JSONArray getCoinMint() {
         TransactionViewPayload viewPayload = TransactionViewPayload.builder()
                 .function(DAT3 + "::dat3_core::genesis_info")
                 .arguments(Collections.emptyList())
@@ -188,20 +175,14 @@ public class AptosService {
         return null;
     }
 
-    public Object getBalance(String account) {
+
+    public JSONArray fidReward(String fid, int page, int size) {
+        ArrayList arguments = new ArrayList<>();
+        arguments.add(""+fid);
+        arguments.add(""+page);
+        arguments.add(""+size);
         TransactionViewPayload viewPayload = TransactionViewPayload.builder()
-                .function(DAT3 + "::dat3_core::genesis_info")
-                .arguments(Collections.emptyList())
-                .typeArguments(Collections.emptyList())
-                .build();
-        return aptosClient.requestAccountResource(account, com.chat.utils.aptos.request.v1.model.Resource.apt());
-
-
-    }
-
-    public JSONArray fid_reward(String fid) {
-        TransactionViewPayload viewPayload = TransactionViewPayload.builder()
-                .function(DAT3 + "::routel::fid_reward")
+                .function(DAT3_NFT + "::invitation_reward::fid_reward")
                 .arguments(Collections.singletonList(fid))
                 .typeArguments(Collections.emptyList())
                 .build();
@@ -213,10 +194,10 @@ public class AptosService {
         return null;
     }
 
-    public JSONArray get_nft_mint(String address, String collection_name) {
+    public JSONArray getNftMintState(String address) {
         ArrayList arguments = new ArrayList<>();
         arguments.add(address);
-        arguments.add(collection_name);
+//        arguments.add(collection_name);
         TransactionViewPayload viewPayload = TransactionViewPayload.builder()
                 .function(DAT3_NFT + "::dat3_invitation_nft::mint_state")
                 .arguments(arguments)
@@ -229,6 +210,58 @@ public class AptosService {
         }
         return null;
     }
+    public void sysSendMsg(String from,String to) {
+        ArrayList arguments = new ArrayList<>();
+        //from 代表谁发消息 并不代表谁是消费者
+        arguments.add(from);
+        arguments.add(to);
+//        arguments.add(collection_name);
+        TransactionPayload transactionPayload = TransactionPayload.builder()
+                .type(TransactionPayload.ENTRY_FUNCTION_PAYLOAD)
+                .function(DAT3 + "::payment::sys_send_msg")
+                .arguments(arguments)
+                .typeArguments(Collections.emptyList())
+                .build();
+        toQueue(DAT3,transactionPayload,false);
+    }
+
+    public JSONArray getIsSender(String from,String to) {
+        ArrayList arguments = new ArrayList<>();
+        arguments.add(from);
+        arguments.add(to);
+//        arguments.add(collection_name);
+        TransactionViewPayload viewPayload = TransactionViewPayload.builder()
+                .function(DAT3 + "::payment::is_sender")
+                .arguments(arguments)
+                .typeArguments(Collections.emptyList())
+                .build();
+        Response<JSON> view = aptosClient.view(null, viewPayload);
+        log.error("getIsSender" + view);
+        if (JSONArray.class.equals(view.getData().getClass())) {
+            return JSONUtil.parseArray(view.getData());
+        }
+        return null;
+    }
+    //获取未回复的消息
+    public JSONArray viewReceive(String from,String to) {
+        ArrayList arguments = new ArrayList<>();
+        //合约参数反了 第一个参数为受益者 第二个参数为发送者
+        arguments.add(to);
+        arguments.add(from);
+//        arguments.add(collection_name);
+        TransactionViewPayload viewPayload = TransactionViewPayload.builder()
+                .function(DAT3 + "::payment::view_receive")
+                .arguments(arguments)
+                .typeArguments(Collections.emptyList())
+                .build();
+        Response<JSON> view = aptosClient.view(null, viewPayload);
+        log.error("view_receive" + view);
+        if (JSONArray.class.equals(view.getData().getClass())) {
+            return JSONUtil.parseArray(view.getData()).getJSONArray(0);
+        }
+        return null;
+    }
+
 
     public JSONObject getEpochInfo() {
         com.chat.utils.aptos.request.v1.model.Resource blockResourceTag = com.chat.utils.aptos.request.v1.model.Resource.builder()

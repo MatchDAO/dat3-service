@@ -1,6 +1,7 @@
 package com.chat.service;
 
 import cn.hutool.json.JSONUtil;
+import com.chat.cache.TickerBase;
 import com.chat.common.ResultCode;
 import com.chat.config.TransactionConfig;
 import com.chat.entity.dto.*;
@@ -87,18 +88,9 @@ public class TransactionUtils {
         return new ArrayList<>();
     }
 
+    //Already implemented in this service
     public WalletTicker exchangePrice(String sourceType, String toType) throws Exception {
-        Request request = new Request.Builder()
-                .url(transactionConfig.getTransactionUrl() + "/user/exchange/price"
-                        + "?sourceType=" + sourceType
-                        + "&toType=" + toType)
-                .get()
-                .build();
-        Response resp = httpClient.newCall(request).execute();
-        String respStr = resp.body().string();
-        log.info("Wallet exchangePrice:{}-----------resp:{}", respStr, resp);
-        WalletTicker result = JSONUtil.toBean(respStr, WalletTicker.class);
-        return result;
+        return TickerBase.currentSymbol(sourceType, toType);
     }
 
     public WalletUserResult exchange(String password, String publicAddress, String sourceType, String toType, String amount, String price) throws Exception {

@@ -1,5 +1,6 @@
 package com.chat.common;
 
+import com.chat.config.own.PrivateConfig;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -8,8 +9,8 @@ import lombok.Getter;
 public enum ChainEnum {
 
 
-    ETH("ETH", "ETH", "ETH", "1", "1", false, "https://etherscan.io/token/images/bnb_28_2.png", "https://etherscan.io/", "https://rpc.ankr.com/eth", ""),
-    APTOS("APTOS", "APT", "APTOS", "1", "1", false, "https://explorer.aptoslabs.com/favicon.ico", "https://explorer.aptoslabs.com", "https://fullnode.mainnet.aptoslabs.com", ""),
+    ETH("ETH", "ETH", "ETH", "1", "0", false, "https://etherscan.io/token/images/bnb_28_2.png", "https://etherscan.io/", "https://rpc.ankr.com/eth", ""),
+    APTOS("APTOS", "APT", "APTOS", "1", "1", false, "https://explorer.aptoslabs.com/favicon.ico", "https://explorer.aptoslabs.com", PrivateConfig.APTOS_URL, ""),
    // APTOS("APTOS", "APT", "APTOS", "1", "1", false, "https://explorer.aptoslabs.com/favicon.ico", "https://explorer.aptoslabs.com/?network=devnet", "https://fullnode.testnet.aptoslabs.com", ""),
 
     BSC("BSC", "BNB", "ETH", "56", "0", false, "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png", "https://bscscan.com/", "https://binance.ankr.com", "");
@@ -22,7 +23,7 @@ public enum ChainEnum {
     private final Boolean lock;
     private final String icon;
     private final String scanUrl;
-    private final String rpcRrl;
+    private final String rpcUrl;
     private final String description;
 
     public static ChainEnum of(String name) {

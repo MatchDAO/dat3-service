@@ -485,11 +485,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                     try {
                         JSONArray userAssets = aptosService.getUserAssets(user.getAddress());
                         if (userAssets != null && userAssets.size() > 0 && (userAssets.getLong(0) == 0 || userAssets.getLong(1) == 0)) {
-                            aptosService.dat3_manager_sys_user_init(user.getInvitationCode(), user.getUserCode(), user.getAddress());
+                            aptosService.dat3SysUserInit(user.getInvitationCode(), user.getUserCode(), user.getAddress());
                         }
                     } catch (Exception e) {
                         log.info("login userAssets " + e.fillInStackTrace());
                     }
+                }
+                if (emTemplate.getUser(user.getUserCode()) == null) {
+                    emTemplate.createUser(user.getUserCode(), ChatConfig.EM_PWD + user.getUserCode());
+                    modifyUserInfoBase(user.getUserCode(), user.getUserName(), user.getPortrait());
                 }
                 String emToken = emTemplate.getUserToken(user.getUserCode(), user.getEmUuid(), 0, ChatConfig.EM_PWD + user.getUserCode());
                 t3 = System.currentTimeMillis();
@@ -599,14 +603,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             }
         }
 
-        String fileUrl="default";
+        String fileUrl = "default";
         log.info("{}", stringStringMap);
         if (stringStringMap != null && !StringUtil.isEmpty(stringStringMap.get("url").toString())) {
             // String url = sysFileService.getFileUrl(stringStringMap.get("fileName"));
-              fileUrl = sysFileService1.getFileUrl(stringStringMap.get("bucketName").toString(), stringStringMap.get("fileName").toString());
+            fileUrl = sysFileService1.getFileUrl(stringStringMap.get("bucketName").toString(), stringStringMap.get("fileName").toString());
             log.info(fileUrl);
             set.set(User::getPortrait, fileUrl);
-
 
 
         } else {
@@ -633,7 +636,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
             map.put("nickname", query.getUserName());
             map.put("avatarurl", fileUrl);
-            emTemplate.setMetadataToUser(byId.getUserCode(),map);
+            emTemplate.setMetadataToUser(byId.getUserCode(), map);
             emToken = emTemplate.getUserToken(byId.getUserCode(), emUser.getUuid(), 0, ChatConfig.EM_PWD + byId.getUserCode());
         } catch (Exception e) {
             log.error("{}", e);
@@ -841,7 +844,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             set.set(User::getUserName, query.getUserName());
             HashMap map = new HashMap();
             map.put("nickname", query.getUserName());
-            emTemplate.setMetadataToUser(query.getUserCode() ,map);
+            emTemplate.setMetadataToUser(query.getUserCode(), map);
         }
         if (!StrUtil.isEmpty(query.getBio())) {
             set.set(User::getBio, query.getBio());

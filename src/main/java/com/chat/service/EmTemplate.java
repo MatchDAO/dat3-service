@@ -30,6 +30,7 @@ public class EmTemplate {
         EMUser user = null;
         try {
             user = service.user().create(userName, pwd).block();
+            log.info("createUser EMUser :{}",user);
         } catch (EMException e) {
             log.error(e.getMessage());
         }
@@ -40,9 +41,9 @@ public class EmTemplate {
         EMUser user = null;
         try {
             user = service.user().get(userName).block();
+            log.info("EMUser :{}",user);
         } catch (EMException e) {
-            e.getErrorCode();
-            e.getMessage();
+            log.error("EMUser :{}",e.getMessage());
         }
         return user;
     }
@@ -161,7 +162,7 @@ public class EmTemplate {
                     .syncDevice(true)
                     .send();
             send.subscribe((s) -> s.getMessageIdsByEntityId().forEach((k, v) -> {
-                log.info((System.currentTimeMillis() - l) + "getMessageIdsByEntityId :: {},{}", k, v);
+                log.info((System.currentTimeMillis() - l) + "getMessageIdsByEntityId :: {},{},{}", k, v,System.currentTimeMillis()-l);
             }));
 //            send.subscribe((s)-> s.getMessageIdsByEntityId().forEach((k, v) -> {
 //               log.info((System.currentTimeMillis()-l)+ "getMessageIdsByEntityId :: {},{}", k, v);

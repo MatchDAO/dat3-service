@@ -25,7 +25,7 @@ public class RunnerInit {
     private AptosService aptosService;
     @Resource
     private AptosClient aptosClient;
-    private ScheduledThreadPoolExecutor mPoolExecutor = new ScheduledThreadPoolExecutor(5);
+    private ScheduledThreadPoolExecutor mPoolExecutor = new ScheduledThreadPoolExecutor(15);
 
     @PostConstruct
     public void CacheInit() {
@@ -33,7 +33,7 @@ public class RunnerInit {
         mPoolExecutor.execute(() -> {
             while (true) {
                 try {
-                    TimeUnit.SECONDS.sleep(1);
+                    TimeUnit.SECONDS.sleep(2);
                     AptosRequestTask take = aptosService.task.take();
                     try {
                         if (take.getPayload()!=null  ) {

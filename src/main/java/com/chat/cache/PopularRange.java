@@ -14,5 +14,5 @@ import java.util.List;
 @Slf4j
 @Component
 public class PopularRange {
-   //todo 用户多了用es实现popular
+   //todo Should be implemented using ES or professional caching
 }

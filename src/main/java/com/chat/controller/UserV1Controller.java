@@ -130,12 +130,58 @@ public class UserV1Controller {
             JSONArray userAssets = aptosService.getUserAssets(byId.getAddress());
             if (userAssets != null && userAssets.size() > 0) {
                 if (userAssets.getLong(0) == 0 || userAssets.getLong(1) == 0) {
-                    aptosService.dat3_manager_sys_user_init(code, userCode, byId.getAddress());
+                    aptosService.dat3SysUserInit(code, userCode, byId.getAddress());
+                    aptosService.addInvitee(code, byId.getAddress());
+
+
                 }
             }
             return R.success();
         }
         return R.success("You have verified the code :" + byId.getInvitationCode());
+    }
+
+
+    @AuthToken(validate = false)
+    @GetMapping("/verifyInit")
+    public R invitationCode(@RequestHeader(value = "token") String token) throws Exception {
+
+
+        String userCode = null;
+        try {
+            userCode = JwtUtils.getUser(token, SecurityConstant.USER_ID);
+            if (userCode == null) {
+                return R.success(0);
+            }
+        } catch (Exception e) {
+            log.error("`Invalid user" + e.fillInStackTrace());
+            return R.error(MessageUtils.getLocale("user.invalid"));
+        }
+        if (StrUtil.isEmpty(userCode)) {
+            return R.error("error code");
+        }
+        User user = userService.getById(userCode);
+        if (user != null) {
+            JSONArray userAssets = aptosService.getUserAssets(user.getAddress());
+            String code = "0";
+            if (userAssets != null && userAssets.size() > 0) {
+                try {
+                    int i = Integer.parseInt(user.getInvitationCode());
+                    if (i == 0 || i > 5000) {
+                        throw new Exception("");
+                    }
+                    code = "" + i;
+                } catch (Exception e) {
+                    return R.error("Sorry, your invitationCode is INVALID");
+                }
+                if (userAssets.getLong(0) == 0 || userAssets.getLong(1) == 0) {
+                    aptosService.dat3SysUserInit(code, userCode, user.getAddress());
+                    aptosService.addInvitee(code, user.getAddress());
+                }
+            }
+        }
+
+        return R.success();
     }
 
     private static TimedCache<String, JSONArray> FID_REWARD = CacheUtil.newTimedCache(60 * 1000);
@@ -153,9 +199,15 @@ public class UserV1Controller {
         } catch (Exception e) {
             return R.error("Sorry, your invitationCode is INVALID");
         }
+        if (size == null || size == 0) {
+            size = 100;
+        }
+        if (page == null || page == 0) {
+            page = 1;
+        }
         JSONArray fid_reward = FID_REWARD.get(fid);
         if (fid_reward == null) {
-            fid_reward = aptosService.fid_reward(fid);
+            fid_reward = aptosService.fidReward(fid, page, size);
             if (fid_reward != null) {
                 FID_REWARD.put(fid, fid_reward);
             }
@@ -167,22 +219,12 @@ public class UserV1Controller {
             re.set("spendReward", fid_reward.getStr(2));
             re.set("earnReward", fid_reward.getStr(3));
             JSONArray invitee = fid_reward.getJSONArray(4);
-            int total = invitee.size();
-            if (size == null || size == 0) {
-                size = 100;
-            }
-            if (page == null || page == 0) {
-                page = 1;
-            }
-            int curr = Math.min(total, size * page);
 
-            int begin = Math.max(0, curr - size);
-            if (size * page > total && total % size > 0) {
-                begin = Math.max(0, curr - total % size);
-            }
-            List<Object> objects = invitee.subList(begin, curr);
+            int total = fid_reward.getInt(5);
+
+
             LinkedList data = new LinkedList<>();
-            for (Object object : objects) {
+            for (Object object : invitee) {
                 String addr = object.toString();
                 User user = (User) userCache.getByAddress(addr);
                 HashMap<Object, Object> map = new HashMap<>();

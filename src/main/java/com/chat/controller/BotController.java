@@ -85,7 +85,7 @@ public class BotController {
                 temp1.put(of.getCode(), System.currentTimeMillis());
                 return temp1;
             });
-            JSONArray nft = mintCache.get(userCache.getUser(userCode).getAddress(), (k) -> aptosService.get_nft_mint(k, "DAT3 invitation NFT"));
+            JSONArray nft = mintCache.get(userCache.getUser(userCode).getAddress(), (k) -> aptosService.getNftMintState(k));
             if (nft == null) {
                 return R.error();
             }
@@ -98,9 +98,9 @@ public class BotController {
             Long start_time = nft.getLong(3);
             Long end_time = nft.getLong(4);
             Long progress = nft.getLong(5);
-            Boolean inWhitelist = nft.getBool(7);
-            Long mint_num = nft.getLong(8, 0L);
-            JSONArray mint_nft = nft.getJSONArray(9);
+            Boolean inWhitelist = nft.getBool(6);
+            Long mint_num = nft.getLong(7, 0L);
+            JSONArray mint_nft = nft.getJSONArray(8);
             boolean start = System.currentTimeMillis() / 1000 > start_time;
             res.set("start", start);
             if (mint_num < 1 && inWhitelist && start) {
@@ -166,7 +166,7 @@ public class BotController {
                 temp1.put(of.getCode(), System.currentTimeMillis());
                 return temp1;
             });
-            JSONArray nft = mintCache.get(userCache.getUser(userCode).getAddress(), (k) -> aptosService.get_nft_mint(k, "DAT3 invitation NFT"));
+            JSONArray nft = mintCache.get(userCache.getUser(userCode).getAddress(), (k) -> aptosService.getNftMintState(k ));
             if (nft == null) {
                 return R.error();
             }

@@ -66,7 +66,7 @@ public class MetadataController {
             temp.put("lock", value.getLock());
             temp.put("icon", value.getIcon());
             temp.put("scanUrl", value.getScanUrl());
-            temp.put("rpcRrl", value.getRpcRrl());
+            temp.put("rpcRrl", value.getRpcUrl());
             List<TokenEnum> tokens = TokenEnum.ofChain(value.getName());
             List<HashMap<String, Object>> tokenList = new ArrayList<>();
             for (TokenEnum token : tokens) {

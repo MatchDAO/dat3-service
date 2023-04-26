@@ -10,6 +10,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.chat.cache.RateLimiterCache;
 import com.chat.cache.RtcSessionCache;
+import com.chat.cache.UserCache;
 import com.chat.common.*;
 import com.chat.config.own.PrivateConfig;
 import com.chat.entity.Interactive;
@@ -55,6 +56,8 @@ public class RtcController {
     private InteractiveServiceImpl interactiveService;
     @Resource
     private UserServiceImpl userService;
+    @Resource
+    private UserCache userCache;
     @Resource
     private TransactionUtils transactionUtils;
     @Resource
@@ -490,14 +493,14 @@ public class RtcController {
         if (!CollUtil.isEmpty(notEnd)) {
             return R.custom(500, MessageUtils.getLocale("call.busy") );
         }
-        User fromUser = userService.getById(userCode);
-        PriceGradeUserDto grade = priceGradeUserService.grade(to);
-        log.info(""+fromUser);
-        JSONArray userAssets = aptosService.getUserAssets(fromUser.getAddress());
-        log.info(userAssets.toString());
-        if (userAssets!=null&&userAssets.size()>0) {
-
-            if(userAssets.getLong(5)<= new BigInteger(grade.getEPrice()).longValue() ){
+        User fromUser = userCache.getUser(userCode);
+        User toUser = userCache.getUser(to);
+//        PriceGradeUserDto grade = priceGradeUserService.grade(to);
+        log.info("" + fromUser);
+        JSONArray feeWith = aptosService.feeWith(toUser.getAddress(), fromUser.getAddress());
+        log.info(feeWith.toString());
+        if (feeWith != null && feeWith.size() > 0) {
+            if (feeWith.getLong(3) <= feeWith.getLong(2)) {
                 return R.error(MessageUtils.getLocale("result.302"));
             }
         }
@@ -599,8 +602,8 @@ public class RtcController {
             map.put("token", s);
             // todo 延时器预扣费
             myCallDelayQueue.add(new CallDelayTask(from, to, channelName, 20 * 1000, 99, channelDto.getBegin()));
-           //定时查询用户金额是否足够
-            myCallDelayQueue.add(new CallDelayTask(from, to, channelName, 59 * 1000, 58,channelDto.getBegin()));
+            //定时查询用户金额是否足够
+            myCallDelayQueue.add(new CallDelayTask(from, to, channelName, 50 * 1000, 59, channelDto.getBegin()));
 
             return R.success(map);
         } else {
@@ -637,7 +640,7 @@ public class RtcController {
         if (channelInfo==null) {
             return R.error();
         }
-        ChannelDto channelDto=  rtcSessionCache.newChannelBegin(from,to,System.currentTimeMillis());
+        ChannelDto channelDto=  rtcSessionCache.newChannelBegin(from,to, System.currentTimeMillis());
         //获取to当前单价
         PriceGradeUserDto grade = priceGradeUserService.grade(to);
         try {
@@ -689,15 +692,16 @@ public class RtcController {
             return R.error();
         }
         Integer frozenTimes = channelInfo.getFrozenTimes();
-        if (rtcSessionCache.channelFrozen(from,to,"")) {
-            frozenTimes+=1;
-        };
+        if (rtcSessionCache.channelFrozen(from, to, "")) {
+            frozenTimes += 1;
+        }
+        ;
         //获取to当前单价
         PriceGradeUserDto grade = priceGradeUserService.grade(to);
         try {
             Interactive interactive = new Interactive();
             long timestamp = System.currentTimeMillis();
-            interactive.setId("" + channelInfo.getBegin() + channelInfo.getChannel()+000+frozenTimes);
+            interactive.setId("" + channelInfo.getBegin() + channelInfo.getChannel() + 000 + frozenTimes);
             interactive.setUserCode(from);
             interactive.setCreator(to);
             interactive.setToken(TokenEnum.ETH.getSymbol());
@@ -711,7 +715,7 @@ public class RtcController {
             log.error(e + "");
             return R.error(MessageUtils.getLocale("call.too_frequent"));
         }
-        myCallDelayQueue.add(new CallDelayTask(from, to, channelInfo.getChannel(), 5 * 1000, 100,channelInfo.getBegin()));
+        myCallDelayQueue.add(new CallDelayTask(from, to, channelInfo.getChannel(), 5 * 1000, 100, channelInfo.getBegin()));
         return R.success();
     }
     @PostMapping("/channel/callEndV1")

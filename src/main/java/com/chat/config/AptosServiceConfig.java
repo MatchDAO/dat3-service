@@ -11,7 +11,7 @@ public class AptosServiceConfig {
 
     @Bean
     public AptosClient aptosClient() {
-        return new AptosClient(ChainEnum.APTOS.getRpcRrl(), info -> {
+        return new AptosClient(ChainEnum.APTOS.getRpcUrl(), info -> {
         }, s -> {
         });
     }

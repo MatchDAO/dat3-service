@@ -2,6 +2,7 @@ package com.chat.utils.aptos;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSON;
+import cn.hutool.json.JSONObject;
 import com.chat.config.own.PrivateConfig;
 import com.chat.utils.aptos.request.v1.model.*;
 import com.chat.utils.aptos.request.v1.rpc.body.*;
@@ -22,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.chat.config.own.PrivateConfig.DAT3;
-
 /**
  * @author liqiang
  */
@@ -43,6 +42,18 @@ public class AptosClient extends AbstractClient {
                 .build();
 
         return this.call(requestAccount, Account.class);
+    }
+
+    public Long balance(String account, Resource coin) {
+
+        Response<AccountResource> accountResourceResponse = this.requestAccountResource(account, Resource.ofCoinStore(coin));
+        try {
+            JSONObject data = accountResourceResponse.getData().getData();
+            return data.getJSONObject("coin").getLong("value");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0L;
     }
 
     public String host() {
