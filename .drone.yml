@@ -9,7 +9,7 @@ steps: # 定义流水线执行步骤，这些步骤将顺序执行
       - name: maven-cache
         path: /root/.m2 # 将maven下载依赖的目录挂载出来，防止重复下载
       - name: maven-build
-        path: /app/build # 将应用打包好的Jar和执行脚本挂载出来
+        path: /app/build # 将应用打包好的Jar和执行脚本挂载出 来
     commands: # 定义在Docker容器中执行的shell 命令
       - cp /root/.m2/1data/beta_PrivateConfig.java  /drone/src/main/java/com/chat/config/own/PrivateConfig.java
       - cp /root/.m2/1data/application-beta.yml  /drone/src/src/main/resources/application-beta.yml
