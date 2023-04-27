@@ -11,14 +11,14 @@ steps: # 定义流水线执行步骤，这些步骤将顺序执行
       - name: maven-build
         path: /app/build # 将应用打包好的Jar和执行脚本挂载出 来
     commands: # 定义在Docker容器中执行的shell 命令
-      - cp -rf /root/.m2/1data/beta_PrivateConfig.java  ./src/main/java/com/chat/config/own/PrivateConfig.java
-      - cp /root/.m2/1data/application-beta.yml  ./src/main/resources/application-beta.yml
+      - cp -rf /root/.m2/1data/prod_PrivateConfig.java  ./src/main/java/com/chat/config/own/PrivateConfig.java
+      - cp /root/.m2/1data/application-prod.yml  ./src/main/resources/application-prod.yml
       - mvn clean package -DskipTests=true # 应用打包命令    /drone/src/target/demo1-0.0.1-SNAPSHOT.jar
       - cd /app/build
       - ls
       - cd /drone/src/target
       - ls
-      - cp /drone/src/target/chat-0.0.1-SNAPSHOT.jar  /app/build/new-chat-BETA.jar
+      - cp /drone/src/target/chat-0.0.1-SNAPSHOT.jar  /app/build/new-chat-prod.jar
 volumes: # 定义流水线挂载目录，用于共享数 据
   - name: maven-build
     host:
