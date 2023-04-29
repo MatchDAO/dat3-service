@@ -42,7 +42,7 @@ public class MetadataController {
     @GetMapping("/base")
     public R base() {
         JSONObject entries = new JSONObject();
-        entries.set("appVerify", "1");
+        entries.set("appVerify", "0");
         entries.set("v", "1.1.0");
         entries.set("twitter", TWITTER);
         entries.set("discord", DISCORD);
